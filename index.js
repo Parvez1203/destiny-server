@@ -55,7 +55,7 @@ app.post("/create-product-and-checkout-session", async (req, res) => {
     // Respond with the session ID
     console.log(session.id);
     
-    res.json({ sessionId: session.id });
+    res.send(JSON.stringify({ sessionId: session.id }));
   } catch (error) {
     console.error("Error creating product and Checkout session:", error);
     res.status(500).json({ error: error.message });

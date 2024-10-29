@@ -62,7 +62,27 @@ app.post("/create-product-and-checkout-session", async (req, res) => {
   }
 });
 
+// Charge endpoint
+app.post("/charge", async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const charge = await stripe.charges.create({
+      amount: 100, // Amount in cents ($1.00)
+      currency: 'usd',
+      source: token,
+      description: 'Sample Product',
+    });
+
+    res.status(200).json({ success: true, charge });
+  } catch (error) {
+    console.error("Error creating charge:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on https://destiny-client-seven.vercel.app/${PORT}`);
+  console.log(`Server is running on ${PORT}`);
 });

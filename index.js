@@ -29,16 +29,7 @@ app.post('/create-payment-intent', async (req, res) => {
       currency: 'usd',
       source: token,
       description: 'Payment Description',
-      shipping: {
-        name: shipping.name,
-        address: {
-          line1: shipping.address.line1,
-          city: shipping.address.city,
-          state: shipping.address.state,
-          postal_code: shipping.address.postal_code,
-          country: shipping.address.country,
-        },
-      },
+      
     });
 
     res.status(200).send({ success: true, charge });

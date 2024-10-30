@@ -65,46 +65,31 @@ app.get("/", (req, res) => {
 app.post("/create-product-and-checkout-session", async (req, res) => {
   console.log("working");
   
+  const { paymentMethodType, shipping, email, product } = req.body;
+
   try {
-    const { name, description, amount, paymentMethodType } = req.body;
-
-    // Optionally create the product in Stripe
-    const product = await stripe.products.create({
-      name,
-      description,
+    // Step 1: Create a Payment Intent with Stripe
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: product.price * 100, // Amount in cents
+      currency: product.currency,
+      payment_method_types: [paymentMethodType],
+      receipt_email: email,
+      description: product.description,
+      shipping: {
+        name: shipping.recipient,
+        address: {
+          line1: shipping.addressLine[0],
+          line2: shipping.addressLine[1] || '',
+          city: shipping.city,
+          state: shipping.region,
+          postal_code: shipping.postalCode,
+          country: shipping.countryCode,
+        },
+      },
     });
 
-    // Create a price for the product in USD
-    const price = await stripe.prices.create({
-      unit_amount: Math.round(amount * 100),  // Amount in cents (ensure rounding)
-      currency: 'usd',                         // Always set currency to USD
-      product: product.id,                     // Associate the price with the product
-    });
+    res.send({ clientSecret: paymentIntent.client_secret });
 
-    let session;
-    if (paymentMethodType === 'card') {
-      // Use Payment Intent
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100),
-        currency: 'usd',
-        payment_method_types: [paymentMethodType],
-      });
-      res.send({ clientSecret: paymentIntent.client_secret });
-    } else {
-      // Use Checkout session
-      session = await stripe.checkout.sessions.create({
-        line_items: [
-          {
-            price: price.id,
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: 'https://destiny-client-seven.vercel.app/',
-        cancel_url: 'https://destiny-client-seven.vercel.app/',
-      });
-      res.send({ sessionId: session.id });
-    }
   } catch (error) {
     console.error("Error creating product and Checkout session:", error);
     res.status(500).json({ error: error.message });

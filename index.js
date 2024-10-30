@@ -20,23 +20,15 @@ app.get("/config", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { shipping } = req.body || ''; // Expecting shipping info from client
-
-    // Static values for amount and currency
-    const amount = 1999; // Amount in cents (e.g., $19.99)
-    const currency = "USD";
-    // Create the payment intent with dynamic amount and shipping details if provided
     const paymentIntent = await stripe.paymentIntents.create({
-      currency,
-      amount, // Use the amount provided in the request body
+      currency: "USD",
+      amount: 1999,
       automatic_payment_methods: { enabled: true },
-      shipping, // Add shipping details if available
     });
 
-    // Send the client secret and other details to the client
+    // Send publishable key and PaymentIntent details to client
     res.send({
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id, // You can send the payment intent ID for tracking
     });
   } catch (e) {
     return res.status(400).send({

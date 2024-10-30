@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require('cors');
+const bodyParser = require('body-parser')
 
 // Replace if using a different env file or config
 const env = require("dotenv").config({ path: "./.env" });

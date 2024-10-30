@@ -20,23 +20,34 @@ app.get("/config", (req, res) => {
   });
 });
 
-app.post("/create-payment-intent", async (req, res) => {
+app.post('/create-payment-intent', async (req, res) => {
+  const { token, shipping } = req.body; // Extract token and shipping details
+
   try {
-    const { token } = req.body;
     const charge = await stripe.charges.create({
       amount: 2000, // amount in cents
       currency: 'usd',
       source: token,
       description: 'Payment Description',
+      shipping: {
+        name: shipping.name,
+        address: {
+          line1: shipping.address.line1,
+          city: shipping.address.city,
+          state: shipping.address.state,
+          postal_code: shipping.address.postal_code,
+          country: shipping.address.country,
+        },
+      },
     });
-    console.log(charge);
-    
+
     res.status(200).send({ success: true, charge });
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: 'Payment failed' });
   }
 });
+
 
 app.listen(8000, () =>
   console.log(`Node server listening at http://localhost:8000`)

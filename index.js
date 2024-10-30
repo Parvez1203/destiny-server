@@ -11,6 +11,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, {
 
 app.use(cors());
 // app.use(express.static(process.env.STATIC_DIR));
+app.use(bodyParser.json());
 
 app.get("/config", (req, res) => {
   res.send({
@@ -27,6 +28,8 @@ app.post("/create-payment-intent", async (req, res) => {
       source: token,
       description: 'Payment Description',
     });
+    console.log(charge);
+    
     res.status(200).send({ success: true, charge });
   } catch (error) {
     console.error(error);

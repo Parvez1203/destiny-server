@@ -20,7 +20,6 @@ app.get("/config", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { shipping } = req.body; // Expecting shipping info from client
 
     // Static values for amount and currency
     const amount = 1999; // Amount in cents (e.g., $19.99)

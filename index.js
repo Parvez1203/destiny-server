@@ -63,12 +63,13 @@ app.get("/", (req, res) => {
 // });
 
 app.post("/create-product-and-checkout-session", async (req, res) => {
-  const { paymentMethodType, shipping, email, product } = req.body;
+  console.log("working");
+  const { paymentMethod, shipping, email } = req.body;
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(product.amount * 100), // Amount in cents (dynamic)
+      amount: 2000, // Amount in cents
       currency: "usd",
-      payment_method_types: [paymentMethodType], // Ensure this matches what your frontend sends
+      payment_method: paymentMethod.id,
       confirmation_method: "manual",
       confirm: true,
       shipping: {
@@ -84,16 +85,12 @@ app.post("/create-product-and-checkout-session", async (req, res) => {
       },
       receipt_email: email,
       description: "Your order description",
-      metadata: {
-        product_name: product.name,
-        product_quantity: product.qty,
-      },
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });
 
   } catch (error) {
-    console.error("Error creating payment intent:", error);
+    console.error("Error creating product and Checkout session:", error);
     res.status(500).json({ error: error.message });
   }
 });

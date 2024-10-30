@@ -65,27 +65,26 @@ app.get("/", (req, res) => {
 app.post("/create-product-and-checkout-session", async (req, res) => {
   console.log("working");
   
-  const { paymentMethodType, shipping, email, product } = req.body;
-
   try {
-    // Step 1: Create a Payment Intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: product.price * 100, // Amount in cents
-      currency: product.currency,
-      payment_method_types: [paymentMethodType],
-      receipt_email: email,
-      description: product.description,
+      amount: 100, // Amount in cents
+      currency: "usd",
+      payment_method: paymentMethod,
+      confirmation_method: "manual",
+      confirm: true,
       shipping: {
         name: shipping.recipient,
         address: {
           line1: shipping.addressLine[0],
-          line2: shipping.addressLine[1] || '',
+          line2: shipping.addressLine[1] || "",
           city: shipping.city,
           state: shipping.region,
           postal_code: shipping.postalCode,
           country: shipping.countryCode,
         },
       },
+      receipt_email: email,
+      description: "Your order description",
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });

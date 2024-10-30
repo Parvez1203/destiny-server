@@ -20,8 +20,11 @@ app.get("/config", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const { amount, currency = "USD", shipping } = req.body; // Expecting amount, currency, and shipping info from client
+    const { shipping } = req.body; // Expecting shipping info from client
 
+    // Static values for amount and currency
+    const amount = 1999; // Amount in cents (e.g., $19.99)
+    const currency = "USD";
     // Create the payment intent with dynamic amount and shipping details if provided
     const paymentIntent = await stripe.paymentIntents.create({
       currency,

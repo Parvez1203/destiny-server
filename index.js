@@ -64,12 +64,12 @@ app.get("/", (req, res) => {
 
 app.post("/create-product-and-checkout-session", async (req, res) => {
   console.log("working");
-  
+  const { paymentMethodType, shipping, email, product } = req.body;
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 100, // Amount in cents
+      amount: 2000, // Amount in cents
       currency: "usd",
-      payment_method: paymentMethod,
+      payment_method: paymentMethodType,
       confirmation_method: "manual",
       confirm: true,
       shipping: {
@@ -85,6 +85,10 @@ app.post("/create-product-and-checkout-session", async (req, res) => {
       },
       receipt_email: email,
       description: "Your order description",
+      metadata: {
+        product_name: product.name,
+        product_quantity: product.qty,
+      },
     });
 
     res.send({ clientSecret: paymentIntent.client_secret });

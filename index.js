@@ -20,22 +20,17 @@ app.get("/config", (req, res) => {
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 1099,
+    const { token } = req.body;
+    const charge = await stripe.charges.create({
+      amount: 2000, // amount in cents
       currency: 'usd',
-      payment_method_types: ['card'],
+      source: token,
+      description: 'Payment Description',
     });
-
-    // Send publishable key and PaymentIntent details to client
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (e) {
-    return res.status(400).send({
-      error: {
-        message: e.message,
-      },
-    });
+    res.status(200).send({ success: true, charge });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: 'Payment failed' });
   }
 });
 

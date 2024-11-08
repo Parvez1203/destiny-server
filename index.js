@@ -39,6 +39,34 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+app.post('/calculateShipping', (req, res) => {
+  const { shippingAddress } = req.body;
+
+  // Check if the country is supported
+  if (shippingAddress.country !== 'US') {
+    return res.status(400).json({ status: 'invalid_shipping_address' });
+  }
+
+  // Define example shipping options
+  const shippingOptions = [
+    {
+      id: 'standard',
+      label: 'Standard Shipping (5-7 business days)',
+      amount: 500,  // Amount in cents
+      description: 'Standard shipping rate'
+    },
+    {
+      id: 'express',
+      label: 'Express Shipping (2-3 business days)',
+      amount: 1000, // Amount in cents
+      description: 'Express shipping rate'
+    }
+  ];
+
+  // Send the supported shipping options back to the client
+  res.json({ supportedShippingOptions: shippingOptions });
+});
+
 // Endpoint to fetch product details
 app.get('/api/products/:id', async (req, res) => {
 

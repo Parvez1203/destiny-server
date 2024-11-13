@@ -22,13 +22,18 @@ app.get("/config", (req, res) => {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency } = req.body;
+    const { amount, currency, productId, productTitles, quantity } = req.body;
 
     // Create a PaymentIntent with the specified amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount, // Amount in cents (e.g., $10.00 is 1000 cents)
       currency: currency, // e.g., 'usd'
       payment_method_types: ['card'], // Specify accepted payment methods
+      metadata: {
+        productId: productId,
+        productTitles: productTitles,
+        quantity: quantity.toString(), // Stripe metadata requires values to be strings
+      },
     });
 
     // Send the client_secret to the client

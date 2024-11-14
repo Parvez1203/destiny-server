@@ -44,6 +44,67 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+app.post("/create-shopify-order", async (req, res) => {
+  const { productId, productTitle, quantity, customerEmail, customerName, shippingAddress, totalAmount, currency } = req.body;
+
+  // Construct the Shopify order payload
+  const shopifyOrderData = {
+    order: {
+      email: customerEmail,
+      total_price: totalAmount.toFixed(2), // Shopify expects total price in decimal format
+      currency: currency,
+      line_items: [
+        {
+          variant_id: productId,
+          quantity: quantity,
+          title: productTitle,
+        },
+      ],
+      financial_status: "paid",
+      customer: {
+        first_name: customerName.split(" ")[0],
+        last_name: customerName.split(" ")[1] || "",
+        email: customerEmail,
+      },
+      shipping_address: {
+        first_name: customerName.split(" ")[0],
+        last_name: customerName.split(" ")[1] || "",
+        address1: shippingAddress.addressLine[0],
+        address2: shippingAddress.addressLine[1] || "",
+        city: shippingAddress.city,
+        province: shippingAddress.region,
+        country: shippingAddress.country,
+        zip: shippingAddress.postalCode,
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(`https://${process.env.SHOPIFY_DOMAIN}/admin/api/2023-10/orders.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+      },
+      body: JSON.stringify(shopifyOrderData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Shopify order creation failed with status ${response.status}`);
+    }
+
+    const orderData = await response.json();
+    res.status(200).json({
+      message: "Shopify order created successfully",
+      orderId: orderData.order.id,
+      order: orderData.order,
+    });
+  } catch (error) {
+    console.error("Error creating Shopify order:", error);
+    res.status(500).json({ error: "Failed to create Shopify order" });
+  }
+});
+
 app.post('/calculateShipping', (req, res) => {
   const { shippingAddress } = req.body;
 

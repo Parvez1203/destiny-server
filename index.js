@@ -10,7 +10,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2022-08-01",
 });
 
-app.use(cors());
+app.use(cors()); 
 // app.use(express.static(process.env.STATIC_DIR));
 app.use(bodyParser.json());
 
@@ -22,7 +22,7 @@ app.get("/config", (req, res) => {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency, productId, productTitles, quantity } = req.body;
+    const { amount, currency, variantId, productTitles, quantity } = req.body;
 
     // Create a PaymentIntent with the specified amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
@@ -30,7 +30,7 @@ app.post('/create-payment-intent', async (req, res) => {
       currency: currency, // e.g., 'usd'
       payment_method_types: ['card'], // Specify accepted payment methods
       metadata: {
-        productId: productId,
+        variant_id: variantId,
         productTitles: productTitles,
         quantity: quantity.toString(), // Stripe metadata requires values to be strings
       },
@@ -45,22 +45,22 @@ app.post('/create-payment-intent', async (req, res) => {
 });
 
 app.post("/create-shopify-order", async (req, res) => {
-  const { productId, productTitle, quantity, customerEmail, customerName, shippingAddress, totalAmount, currency } = req.body;
+  const { paymentIntentId, customerEmail, customerName, shippingAddress, billingAddress} = req.body;
 
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+  const variant_id = paymentIntent.metadata.variant_id;
+  const quantity = parseInt(paymentIntent.metadata.quantity, 10);
   // Construct the Shopify order payload
   const shopifyOrderData = {
     order: {
-      email: customerEmail,
-      total_price: totalAmount.toFixed(2), // Shopify expects total price in decimal format
-      currency: currency,
       line_items: [
         {
-          variant_id: productId,
+          variant_id: variant_id,
           quantity: quantity,
-          title: productTitle,
         },
       ],
-      financial_status: "paid",
+      inventory_behaviour: "decrement_obeying_policy",
       customer: {
         first_name: customerName.split(" ")[0],
         last_name: customerName.split(" ")[1] || "",
@@ -76,15 +76,27 @@ app.post("/create-shopify-order", async (req, res) => {
         country: shippingAddress.country,
         zip: shippingAddress.postalCode,
       },
+      billing_address: {
+        first_name: customerName.split(" ")[0],
+        last_name: customerName.split(" ")[1] || "",
+        address1: billingAddress.addressLine[0],
+        address2: billingAddress.addressLine[1] || "",
+        city: billingAddress.city,
+        province: billingAddress.region,
+        country: billingAddress.country,
+        zip: billingAddress.postalCode,
+      },
+      financial_status: "paid",
     },
   };
+  
 
   try {
     const response = await fetch(`https://${process.env.SHOPIFY_DOMAIN}/admin/api/2023-10/orders.json`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": process.env.SHOPIFY_ACCESS_TOKEN,
+        "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_ACCESS_TOKEN,
       },
       body: JSON.stringify(shopifyOrderData),
     });
@@ -275,6 +287,6 @@ app.get('/api/products', async (req, res) => {
 
 
 
-app.listen(8000, () =>
+app.listen(5000, () =>
   console.log(`Node server listening at http://localhost:8000`)
 );
